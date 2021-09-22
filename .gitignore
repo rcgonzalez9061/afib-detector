@@ -3,6 +3,8 @@ data/
 config.json
 *.pt
 training.out
+blog/
+models/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

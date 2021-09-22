@@ -1,7 +1,4 @@
 """
-Ruben Gonzalez
-9/5/2021
-
 An extension of the MIT wfdb library for added utility.
 """
 
@@ -10,7 +7,7 @@ import numpy as np
 import wfdb
 import matplotlib.pyplot as plt
 from scipy import fft
-from utils import plot_ecg_dft
+from utils import plot_ecg_dft, plot_spectrogram
 import glob
 import os
 
@@ -54,6 +51,16 @@ class Record(wfdb.io.record.Record):
         return_fig=False,
     ):
         return plot_ecg_dft(self.p_signal, self.fs, figsize, suptitle=f'Record: {self.record_name}')
+    
+    def plot_spectrograms(self, figsize=(6,4)):
+        ecg1, ecg2 = self.p_signal.T
+        
+        fig, axes = plt.subplots(2, figsize=figsize)
+        plot_spectrogram(ecg1, 250, ax=axes[0], f_cutoff=60.)
+        plot_spectrogram(ecg2, 250, xlabel='Time', ax=axes[1], f_cutoff=60.)
+        fig.suptitle(f'Record: {self.record_name}')
+        
+        
 
     def label_map(self):
         return self.annotation.label_map(sample_end=self.end)

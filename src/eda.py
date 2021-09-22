@@ -25,9 +25,9 @@ MEAN_ECG_OUTPATH = os.path.join(PROJECT_DIR, "assets", "mean_ecg_dft.png")
 def load_label_map():
     return pd.read_csv(LABEL_MAP_PATH, dtype={"record": str})
 
-
 def generate_label_maps():
-    record_paths = pd.Series(glob.glob("data/physionet/afdb/*.dat"))
+    dat_pattern = os.path.join(PROJECT_DIR, 'data', 'physionet', 'afdb', '*.dat')
+    record_paths = pd.Series(glob.glob(dat_pattern))
     records = record_paths.str.extract("(\d+\.dat)", expand=False).str.replace(
         "\.dat", ""
     )
@@ -49,21 +49,31 @@ def generate_label_maps():
 
 def generate_grouped_label_table():
     label_maps_df = generate_label_maps()
-    label_maps_gb = label_maps_df.groupby("annot")
+    label_maps_df = label_maps_df.rename({'annot': 'Label'}, axis=1)
+    label_maps_gb = label_maps_df.groupby("Label")
     total_durations = label_maps_gb.duration.sum() / SAMPLING_RATE / 60
-    total_durations.name = "Total Duration (Minutes)"
+    total_durations.name = "Total Duration<br>(Minutes)"
     total_durations = total_durations.to_frame()
-    total_durations["Total Duration (%)"] = (
-        total_durations["Total Duration (Minutes)"]
-        / total_durations["Total Duration (Minutes)"].sum()
+    total_durations["Total<br>Duration (%)"] = (
+        total_durations["Total Duration<br>(Minutes)"]
+        / total_durations["Total Duration<br>(Minutes)"].sum()
     )
-    total_durations["Unique Occasions"] = label_maps_gb.record.count()
-    total_durations["Min Duration"] = label_maps_gb.duration.min()
-    total_durations["Avg Duration"] = label_maps_gb.duration.mean()
-    total_durations["Long Samples (>5s)"] = (
-        (label_maps_df.duration > SAMPLING_RATE * 5).groupby(label_maps_df.annot).sum()
+    total_durations["Unique<br>Occasions"] = label_maps_gb.record.count()
+    total_durations["Min<br>Duration"] = label_maps_gb.duration.min()
+    total_durations["Avg Duration<br>(Samples)"] = label_maps_gb.duration.mean().astype(int)
+    total_durations["Long Samples<br>(>30s)"] = (
+        (label_maps_df.duration > SAMPLING_RATE * 30).groupby(label_maps_df.Label).sum()
     )
-    return total_durations.style.format({"Total Duration (%)": "{:,.2f}".format})
+    total_durations = (
+        total_durations
+        .style.format({
+            "Total Duration<br>(Minutes)": "{:,.2f}".format,
+            "Total<br>Duration (%)": "{:,.2%}".format,
+            "Avg Duration": "{:,.2f}".format,
+            "Avg Duration<br>(Samples)": "{:,}".format,
+        })
+    )
+    return total_durations
 
 
 def pick_random_subsample(start, end, duration):

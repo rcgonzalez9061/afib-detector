@@ -1,13 +1,16 @@
 import pandas as pd
 import numpy as np
-from scipy import fft
+from scipy import fft, signal
 import matplotlib.pyplot as plt
 import os
 import json
 import nbformat
 from nbconvert import HTMLExporter, PDFExporter
 from pathlib import Path
-
+import torch
+import pickle
+from pathlib import Path
+import glob
 
 def load_project_config():
     project_dir = Path(os.path.realpath(__file__)).parent.parent
@@ -28,6 +31,31 @@ def plot_ecg_dft(p_signal, fs, figsize=None, suptitle=None):
 
 def plot_dft(fdt_col, x_label=None, ax=None):
     ax = fdt_col.plot(ax=ax, ylabel=fdt_col.name, xlabel=x_label)
+    
+def plot_spectrogram(x, fs, xlabel=None, ylabel=None, ax=None, f_cutoff=None):
+    if ax is None:
+        ax = plt.axes()
+    
+    nperseg = 64
+    f, t, Sxx = signal.spectrogram(x, fs, window='hamming', nperseg=nperseg, noverlap=nperseg//8)
+    ax.pcolormesh(t, fft.fftshift(f), fft.fftshift(np.log10(Sxx), axes=0), shading='gouraud')
+    
+    if f_cutoff is not None:
+        ax.set_ylim(top=f_cutoff)
+    
+    if xlabel is not None:
+        ax.set_xlabel(xlabel)
+    if ylabel is not None:
+        ax.set_ylabel(ylabel)
+    
+    return ax
+    
+def load_model(model_path, model_class, model_args, device=torch.device('cpu')):
+    model = model_class(**model_args)
+    state_dict = torch.load(model_path, device)
+    model.load_state_dict(state_dict)
+    model = model.to(device)
+    return model
     
 def convert_notebook(report_in_path, report_out_path, **kwargs):
     curdir = os.path.abspath(os.getcwd())
