@@ -1,17 +1,15 @@
-import os, json
+import os, sys, json, argparse
 from pathlib import Path
 import gdown
 from io import BytesIO
 from zipfile import ZipFile
 from urllib.request import urlopen
-import argparse
 
 project_dir = Path(os.path.realpath(__file__)).parent
 data_dir = os.path.join(str(project_dir), 'data', 'physionet', 'afdb')
 src_dir = os.path.join(project_dir, 'src')
 
 # add project modules
-import sys
 sys.path.insert(1, src_dir)
 
 # import eda and etl
@@ -20,15 +18,26 @@ from src import eda, etl
 
 def main():
     parser = argparse.ArgumentParser(description='AFib Detection Project Setup')
+    parser.add_argument('--all', action='store_true', default=False,
+                        help='Performs all actions below')
     parser.add_argument('--download-data', action='store_true', default=False,
                         help='Loads data from Physionet Database')
     parser.add_argument('--download-models', action='store_true', default=False,
                         help='Downloads pretrained models')
     parser.add_argument('--build', action='store_true', default=False,
-                        help='Downloads pretrained models')
+                        help='Builds folder structure and label mappings')
+    parser.add_argument('--eval', action='store_true', default=False,
+                        help='Evaulates models in models folder')
     args = parser.parse_args()
     
     make_config()
+    
+    if args.all:
+        download_dataset()
+        download_pretrained_models()
+        build()
+        evaluate()
+        return
     
     if args.download_data:
         download_dataset()
@@ -36,7 +45,14 @@ def main():
         download_pretrained_models()
     if args.build and (args.download_data or os.path.exists(data_dir)):
         build()
-        
+    if args.eval:
+        evaluate()
+
+def evaluate():
+    if 'eval_all' not in sys.modules:
+        from src import eval_all
+    eval_all.main()
+
 def make_config():
     config = {
         'project_dir': str(project_dir),
