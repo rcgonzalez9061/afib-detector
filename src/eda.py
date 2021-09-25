@@ -58,10 +58,10 @@ def generate_grouped_label_table():
         total_durations["Total Duration<br>(Minutes)"]
         / total_durations["Total Duration<br>(Minutes)"].sum()
     )
-    total_durations["Unique<br>Occasions"] = label_maps_gb.record.count()
-    total_durations["Min<br>Duration"] = label_maps_gb.duration.min()
     total_durations["Avg Duration<br>(Samples)"] = label_maps_gb.duration.mean().astype(int)
-    total_durations["Long Samples<br>(>30s)"] = (
+    total_durations["Min<br>Duration"] = label_maps_gb.duration.min()
+    total_durations["Unique<br>Episodes"] = label_maps_gb.record.count()
+    total_durations["Episodes<br>(>30s)"] = (
         (label_maps_df.duration > SAMPLING_RATE * 30).groupby(label_maps_df.Label).sum()
     )
     total_durations = (

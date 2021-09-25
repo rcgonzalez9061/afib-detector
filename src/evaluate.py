@@ -44,15 +44,25 @@ def get_performance_tables():
     metrics_agg['Fold'] = folds
     metrics_agg['Model'] = model_types
     
-    merged_model_metrics = metrics_agg[metrics_agg.Fold=='all'].set_index('Model').drop(columns=['Fold', 'name'])
+    merged_model_metrics = (
+        metrics_agg[metrics_agg.Fold=='all']
+        .set_index('Model')
+        .drop(columns=['Fold', 'name'])
+        .sort_index()
+    )
     metrics_agg = metrics_agg.drop(metrics_agg.index[metrics_agg.Fold=='all'])
 
 #     model_overview = metrics_agg.drop(columns='name').set_index(['model', 'fold']).astype(float).sort_index()
-    model_overview = metrics_agg.drop(columns='name').pivot(index='Fold', columns=['Model']).swaplevel(0, 1, axis=1).sort_index(axis=1)
+    model_overview = (
+        metrics_agg
+        .drop(columns='name')
+        .pivot(index='Fold', columns=['Model'])
+        .swaplevel(0, 1, axis=1)
+        .sort_index(axis=1))
     model_agg = metrics_agg.drop(columns='Fold').astype({
         'Accuracy': float,
         'F1 Score': float,
         'AUC': float
-    }, errors='ignore').groupby(['Model']).mean()
+    }, errors='ignore').groupby(['Model']).mean().sort_index()
     
     return model_overview, model_agg, merged_model_metrics, metrics_agg

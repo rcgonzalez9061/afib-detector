@@ -5,6 +5,7 @@ config.json
 training.out
 blog/
 models/
+*.zip
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
