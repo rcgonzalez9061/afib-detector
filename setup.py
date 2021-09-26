@@ -12,9 +12,6 @@ src_dir = os.path.join(project_dir, 'src')
 # add project modules
 sys.path.insert(1, src_dir)
 
-# import eda and etl
-from src import eda, etl
-
 
 def main():
     parser = argparse.ArgumentParser(description='AFib Detection Project Setup')
@@ -31,6 +28,9 @@ def main():
     args = parser.parse_args()
     
     make_config()
+    
+    # import eda and etl
+    from src import eda, etl
     
     if args.all:
         download_dataset()
