@@ -1,4 +1,4 @@
-import os, sys, json, argparse
+import os, sys, json, argparse, shutil
 from pathlib import Path
 import gdown
 from io import BytesIO
@@ -9,8 +9,22 @@ project_dir = Path(os.path.realpath(__file__)).parent
 data_dir = os.path.join(str(project_dir), 'data', 'physionet', 'afdb')
 src_dir = os.path.join(project_dir, 'src')
 
+def make_config():
+    config = {
+        'project_dir': str(project_dir),
+        'data_dir': data_dir
+    }
+    config_outpath = os.path.join(project_dir, 'config.json')
+    with open(config_outpath, 'w') as config_file:
+        json.dump(config, config_file)
+
+make_config()
+
 # add project modules
 sys.path.insert(1, src_dir)
+
+# import eda and etl
+from src import eda, etl
 
 
 def main():
@@ -27,10 +41,9 @@ def main():
                         help='Evaulates models in models folder')
     args = parser.parse_args()
     
-    make_config()
     
-    # import eda and etl
-    from src import eda, etl
+    
+    
     
     if args.all:
         download_dataset()
@@ -52,15 +65,6 @@ def evaluate():
     if 'eval_all' not in sys.modules:
         from src import eval_all
     eval_all.main()
-
-def make_config():
-    config = {
-        'project_dir': str(project_dir),
-        'data_dir': data_dir
-    }
-    config_outpath = os.path.join(project_dir, 'config.json')
-    with open(config_outpath, 'w') as config_file:
-        json.dump(config, config_file)
         
 def download_dataset():
     print('Downloading Physionet Data...')
@@ -71,7 +75,7 @@ def download_dataset():
     print('Unpacking Data...')
     dest_folder = os.path.join('data', 'physionet')
     physionet_zip.extractall(dest_folder)
-    os.rename(os.path.join(dest_folder, 'files'), os.path.join(dest_folder, 'afdb'))
+    shutil.move(os.path.join(dest_folder, 'files'), os.path.join(dest_folder, 'afdb'))
 
 def download_pretrained_models():
     url = 'https://drive.google.com/uc?id=1lDG_HlQ8aQN0ttkfQkcmR2eswxLvymWF'
@@ -83,8 +87,8 @@ def download_pretrained_models():
     ZipFile(output).extractall()
     
 def build():
-    os.mkdir(os.path.join(str(project_dir), 'data', 'cleaned'))
-    os.mkdir(os.path.join(str(project_dir), 'data', 'temp'))
+    os.makedirs(os.path.join(str(project_dir), 'data', 'cleaned'), exist_ok=True)
+    os.makedirs(os.path.join(str(project_dir), 'data', 'temp'), exist_ok=True)
     
     eda.generate_label_maps()
     etl.generate_train_test_split_map()
